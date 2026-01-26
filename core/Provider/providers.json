@@ -1,0 +1,100 @@
+[
+    {
+        "provider_id": "openai",
+        "provider_name": "OpenAI",
+        "endpoint": "https://api.openai.com/v1",
+        "api_key": ".env:openai_api",
+        "models": [
+            {
+                "model_name": "GPT-5.2 Pro",
+                "model_id": "gpt-5.2-pro"
+            },
+            {
+                "model_name": "GPT-5.2",
+                "model_id": "gpt-5.2"
+            },
+            {
+                "model_name": "o3-pro",
+                "model_id": "o3-pro"
+            },
+            {
+                "model_name": "GPT-5 Mini",
+                "model_id": "gpt-5-mini"
+            }
+        ]
+    },
+    {
+        "provider_id": "anthropic",
+        "provider_name": "Anthropic",
+        "endpoint": "https://api.anthropic.com/v1/messages",
+        "api_key": ".env:anthropic_api",
+        "models": [
+            {
+                "model_name": "Claude 5.1 Opus",
+                "model_id": "claude-5-1-opus-20260126"
+            },
+            {
+                "model_name": "Claude 5.1 Sonnet",
+                "model_id": "claude-5-1-sonnet-20260126"
+            },
+            {
+                "model_name": "Claude 5.1 Haiku",
+                "model_id": "claude-5-1-haiku-20260126"
+            }
+        ]
+    },
+    {
+        "provider_id": "groq",
+        "provider_name": "Groq",
+        "endpoint": "https://api.groq.com/openai/v1",
+        "api_key": ".env:groq_api",
+        "models": [
+            {
+                "model_name": "Llama 4 Maverick (400B)",
+                "model_id": "llama-4-maverick-400b"
+            },
+            {
+                "model_name": "Llama 4 Scout (17B)",
+                "model_id": "llama-4-scout-17b"
+            },
+            {
+                "model_name": "DeepSeek R1+ (Distill)",
+                "model_id": "deepseek-r1-distill-llama-70b"
+            },
+            {
+                "model_name": "GPT OSS 120B",
+                "model_id": "openai/gpt-oss-120b"
+            }
+        ]
+    },
+    {
+        "provider_id": "google",
+        "provider_name": "Google Gemini",
+        "endpoint": "https://generativelanguage.googleapis.com/v1beta",
+        "api_key": ".env:google_api",
+        "models": [
+            {
+                "model_name": "Gemini 3 Pro",
+                "model_id": "gemini-3-pro"
+            },
+            {
+                "model_name": "Gemini 3 Flash",
+                "model_id": "gemini-3-flash"
+            }
+        ]
+    },
+    {
+        "provider_id": "ollama",
+        "provider_name": "Ollama",
+        "endpoint": "http://127.0.0.1:11434/v1",
+        "api_key": "no_need_of_a_api_key",
+        "models": []
+    },
+    {
+        "provider_id": "lm studio",
+        "provider_name": "LM Studio",
+        "endpoint": "http://127.0.0.1:1234/v1",
+        "api_key": "no_need_of_a_api_key",
+        "models": []
+    }
+]

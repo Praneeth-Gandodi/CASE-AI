@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "case"
+version = "0.0.1"
+description = "A AI agent"
+authors = [{name="PRANEETH KUMAR GANDODI", email="praneethgandhodi@gmail.com"}]
+readme = "README.md"
+license = { file = "LICENSE" }
+dependencies = [
+    "openai",
+    "rich",
+    "questionary",
+    "python-dotenv"
+]
+requires-python = ">=3.8"
+
+[tool.setuptools.packages.find]
+where = ["."]

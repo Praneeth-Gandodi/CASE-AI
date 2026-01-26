@@ -1,0 +1,14 @@
+## Venv
+.case/   
+
+## Temp test files
+test.py
+core/test.py
+
+## Todo stuff 
+Markdown/
+
+core/.env
+
+## __pycache__
+__pycache__/
