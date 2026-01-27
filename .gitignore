@@ -8,7 +8,9 @@ core/test.py
 ## Todo stuff 
 Markdown/
 
-core/.env
+.env
 
 ## __pycache__
 __pycache__/
+
+
