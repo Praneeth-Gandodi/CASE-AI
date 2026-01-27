@@ -9,24 +9,24 @@ console = Console()
 class CASE:
     def __init__(
         self,
-        provider_name:str,
+        provider_id:str,
         model:str,
-        endpoint:str,
+        api_key:str,
         tools:list = None,
         available_functions:dict = None,
         ):
         
-        self.provider_name = provider_name
+        self.provider_id = provider_id
         self.model = model
-        self.endpoint = endpoint
+        self.api_key = api_key
         self.tools = tools
         self.available_functions = available_functions
         
         
         self.provider_ = Providers(
-            provider_name=self.provider_name,
+            provider_id=self.provider_id,
             model=self.model,
-            endpoint=self.endpoint,
+            api_key=api_key,
             stream=False,
             tools = self.tools
         )
