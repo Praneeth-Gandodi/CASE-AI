@@ -1,81 +1,55 @@
 from openai import OpenAI
-from dotenv import load_dotenv, set_key
+from openai import APIConnectionError, AuthenticationError, RateLimitError
+from core.exception import CASEError, ProviderNotFound 
 from pathlib import Path
 import json
-import os
-import questionary
-from rich.console import Console
-
-console = Console()
 class Providers:
 
-    def __init__(self, provider_id , provider_name:str , endpoint:str , model:str, stream:bool = False, tools:list = None):
+    def __init__(self, provider_id:str ,api_key:str, model:str, stream:bool = False, tools:list = None):
         self.provider_id  = provider_id
-        self.provider_name = provider_name
-        self.endpoint = endpoint
         self.model = model 
         self.stream = stream
         self.tools = tools 
-        self.api_key = self.get_api_key()
-    
-    
-    def get_provider_config(self):
+        self.api_key = api_key
+        self.endpoint = self.get_endpoint()
+        self.client = OpenAI(base_url=self.endpoint, api_key=self.api_key)
+
+    def get_endpoint(self):
         base_dir = Path(__file__).resolve().parent
-        provider_file = base_dir / "providers.json"
-        with open(provider_file, "r") as file:
-            providers = json.load(file)
-
-        for provider in providers:
-            if provider["provider_id"] == self.provider_id:
-                return provider
-        
-        raise ValueError(f"Provider '{self.provider_id} is not found in the providers.json.")
-
-    def get_api_key(self):
-        base_dir = Path(__file__).resolve().parent.parent
-        env_file = base_dir / ".env"
-        provider_config = self.get_provider_config()
-
-        load_dotenv(env_file)
-
-        api_key_name = provider_config["api_key"]
-        if api_key_name == "no_api_key" or api_key_name == "no-api-key" or api_key_name == "no_need_of_a_api_key":
-            return "no_need_of_a_api_key"
-        elif api_key_name.startswith(".env:"):
-            api_key = os.getenv(api_key_name[5:])    
-            if not api_key:
-                raise ValueError("") 
-        console.print(api_key)
-        
-
-        
-        
-    def chat(self, chat_completion:list):
-        load_dotenv()
-        
-        provider = self.provider_name.lower()
-        if provider == "groq":
-            try:
-                if not os.getenv("groq_api"):
-                    raise ValueError("Groq API key not found in the environment variables.")
-                api_key = os.getenv("groq_api")
-            except Exception as e:
-                console.print(f"Error occured: {e}")
-        elif provider == "ollama":
-            api_key = "Ollama-key"
-        elif provider == "lm studio":
-            api_key = "LM-Studio-key"
+        file_path = base_dir / "providers.json"
+        with open(file_path, 'r') as file:
+            providers_json = json.load(file)
             
-        client = OpenAI(base_url=self.endpoint, api_key=api_key)
-
-        response = client.chat.completions.create(
-            model = self.model,
-            messages = chat_completion,
-            stream = self.stream,
-            tools = self.tools 
-        )
-        return response
+            endpoint = None
+            for provider in providers_json:
+                if provider['provider_id'] == self.provider_id:
+                    endpoint = provider["endpoint"]
+                    return endpoint
+            if not endpoint:
+                raise ProviderNotFound("The provider you are trying to access is not in the providers json.")
+                
+    def chat(self, chat_completion:list):
+        try:
+            response = self.client.chat.completions.create(
+                model = self.model,
+                messages = chat_completion,
+                stream = self.stream,
+                tools = self.tools 
+            )
+            return response
+        except AuthenticationError as e:
+            raise AuthenticationError("API key is invalid or expired.") 
+        except APIConnectionError as e: 
+            raise APIConnectionError(f"Failed to conenct to the provider at {self.provider_name}")
+        except RateLimitError as e:
+            raise RateLimitError("Rate limit exceeded. Please wait and try again.")
+        except CASEError as e:
+            raise CASEError(f"An Unexpected error occured with the providder {e}.")
     
-agent = Providers(provider_id="groq", provider_name="Groq", endpoint="https://api.groq.com/v1", model="so_and_so")
+    def generate_image(self):
+        pass        
+            
+        
+ 
 
-agent.get_api_key()
+
