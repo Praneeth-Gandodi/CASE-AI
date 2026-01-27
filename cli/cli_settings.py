@@ -6,23 +6,14 @@ from dotenv import load_dotenv, set_key
 from .cli_styling import (info_printing,
                           non_empty_input,
                           warning_printing,
+                          modern_purple,
                           console)
 
 
-modern_purple = Style([
-    ('qmark', 'hidden'),                   
-    ('question', 'fg:#ffffff bold'),
-    ('answer', 'fg:#c554eb bold'),
-    ('pointer', 'fg:#c554eb bold'),
-    ('highlighted', 'fg:#c554eb bold'),    
-    ('selected', 'fg:#888888'),
-    ('separator', 'fg:#444444'),
-    ('instruction', 'fg:#666666'),
-])
 def input_provider_details():
     
     base_dir = Path(__file__).resolve().parent.parent
-    env_file = base_dir /"core" / ".env"
+    env_file = base_dir  / ".env"
     
     info_printing("\n🛈 Make sure the API provider or model supports the OpenAI JSON format.")
     print()
@@ -106,6 +97,7 @@ def get_provider():
     
     provider_choice = questionary.select(
         "Select a provider ↓",
+        qmark='●',
         choices=provider_ids,
         style=modern_purple,
         use_jk_keys=True,
@@ -132,6 +124,7 @@ def get_model(provider_choice):
     model_tuple.append(Choice("Back", value="back"))
     model_choice = questionary.select(
         "Select or Add a new model ↓",
+        qmark='●',
         choices=model_tuple,
         style=modern_purple,
         use_jk_keys=True,
@@ -167,5 +160,3 @@ def model_settings():
     return provider_choice, model_choice
         
 
-
-model_settings()
