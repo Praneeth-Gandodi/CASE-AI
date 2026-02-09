@@ -1,14 +1,14 @@
 from openai import OpenAI
-from openai import APIConnectionError, AuthenticationError, RateLimitError
+from openai import APIConnectionError, AuthenticationError, RateLimitError, APIStatusError
 from core.exception import CASEError, ProviderNotFound 
 from pathlib import Path
 import json
+
 class Providers:
 
-    def __init__(self, provider_id:str ,api_key:str, model:str, stream:bool = False, tools:list = None):
+    def __init__(self, provider_id:str ,api_key:str, model:str, tools:list = None):
         self.provider_id  = provider_id
         self.model = model 
-        self.stream = stream
         self.tools = tools 
         self.api_key = api_key
         self.endpoint = self.get_endpoint()
@@ -30,26 +30,48 @@ class Providers:
                 
     def chat(self, chat_completion:list):
         try:
-            response = self.client.chat.completions.create(
+            response_delta = self.client.chat.completions.create(
                 model = self.model,
                 messages = chat_completion,
-                stream = self.stream,
+                stream = True,
                 tools = self.tools 
             )
-            return response
+            for response in response_delta:
+                yield response
         except AuthenticationError as e:
-            raise AuthenticationError("API key is invalid or expired.") 
+            raise  
         except APIConnectionError as e: 
-            raise APIConnectionError(f"Failed to conenct to the provider at {self.provider_name}")
+            raise 
         except RateLimitError as e:
-            raise RateLimitError("Rate limit exceeded. Please wait and try again.")
+            raise 
+        except APIStatusError as e:
+            raise 
         except CASEError as e:
-            raise CASEError(f"An Unexpected error occured with the providder {e}.")
+            raise         
+        
+    def non_streaming_chat(self, chat_completion:list ):
+        
+        try:
+            response = self.client.chat.completions.create(
+            model = self.model,
+            messages = chat_completion,
+            stream = False,
+            tools = self.tools 
+            )
+
+            return response
+        
+        except AuthenticationError as e:
+            raise 
+        except APIConnectionError as e: 
+            raise 
+        except RateLimitError as e:
+            raise 
+        except CASEError as e:
+            raise 
     
     def generate_image(self):
         pass        
             
+
         
- 
-
-
