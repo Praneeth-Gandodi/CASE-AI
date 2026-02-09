@@ -4,6 +4,7 @@
 ## Temp test files
 test.py
 core/test.py
+core/check.py
 
 ## Todo stuff 
 Markdown/
@@ -13,4 +14,6 @@ Markdown/
 ## __pycache__
 __pycache__/
 
+
+test/
 
