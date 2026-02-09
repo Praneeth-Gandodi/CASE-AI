@@ -136,7 +136,7 @@ def get_model(provider_choice):
         get_provider_list(provider_list, mode="w")
         return get_model(provider_choice)
     elif model_choice == "back":
-        return model_settings() 
+        return None 
         
     return model_choice
     
@@ -156,6 +156,8 @@ def model_settings():
         console.print(provider_choice)
     
     model_choice = get_model(provider_choice)
+    if model_choice is None:
+        return model_settings()
     
     return provider_choice, model_choice
         

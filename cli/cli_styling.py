@@ -2,6 +2,7 @@ import os
 import subprocess
 import questionary
 from rich.console import Console 
+from rich.panel import Panel
 from questionary import Style
 
 console = Console()
@@ -69,3 +70,24 @@ def prompt_api_key(provider_name:str):
         ).ask()
     return api_key
 
+
+def startup_details(provider_name , model_name):
+    console.print(Panel(
+        f"● Current Provider: [bold aquamarine1]{provider_name}[/bold aquamarine1]\n"
+        f"● Current Model:    [bold aquamarine1]{model_name}[/bold aquamarine1]\n"
+        f"● Use [bold violet]/model[/bold violet] to switch provider and model.\n"
+        f"● Use [bold violet]/help[/bold violet] for commands.",
+        border_style="cyan",
+        expand=False
+    ))
+
+
+
+    # console.print(Panel(
+    #     f"● Current Provider: [aquamarine1]{provider_name}[/aquamarine1]\
+    #     \n● Current Model: [aquamarine1]{model_name}[/aquamarine1]\
+    #     \n● Use [violet]/model[/violet] to switch provider and model.\
+    #     \n● Use [violet]/help[/violet] for commands.",
+    #     expand=False                ))
+
+    
