@@ -1,12 +1,12 @@
-import os 
 import json 
+from types import SimpleNamespace
 from core.Provider.provider import Providers
 from rich.console import Console 
 
 console = Console()
 
-## Main class, for generating ai responses
-class CASE:
+
+class Case:
     def __init__(
         self,
         provider_id:str,
@@ -22,31 +22,81 @@ class CASE:
         self.tools = tools
         self.available_functions = available_functions
         
-        
-        self.provider_ = Providers(
+        self.main_agent = Providers(
             provider_id=self.provider_id,
             model=self.model,
-            api_key=api_key,
-            stream=False,
-            tools = self.tools
+            api_key=self.api_key,
+            tools=self.tools
         )
-      
-    def generate_ai_response(self, chat_completion:list):
+        
+        
+    def gen_ai_response(self, chat_completion:list):
         self.chat_completion = chat_completion
         
-        response = self.provider_.chat(chat_completion=self.chat_completion)
-        
-        if response.choices[0].message.tool_calls:
-            yield from self.tool_calling(response.choices[0].message.tool_calls)
+        response_delta = self.main_agent.chat(chat_completion=chat_completion)
 
-        else:
-            yield {
-                "content": response.choices[0].message.content
+        tool_call_buffer = {}
+        full_content = ''
+
+        for chunk in response_delta:
+            delta = chunk.choices[0].delta
+            
+            if delta.content:
+                yield {
+                    'role': 'content',
+                    'data': delta.content
                 }
+                full_content += delta.content
+                
+            if delta.tool_calls:
+                for tc_delta in delta.tool_calls:
+                    idx = tc_delta.index
+                    
+                    if idx not in tool_call_buffer:
+                        tool_call_buffer[idx] = {
+                            'id': tc_delta.id,
+                            'function': {
+                                'name': tc_delta.function.name,
+                                'arguments': ""
+                            },
+                            'type': 'function'
+                        }
 
+                    if tc_delta.function.arguments:
+                        tool_call_buffer[idx]['function']['arguments'] += tc_delta.function.arguments
+                        
+        if tool_call_buffer:
+            tool_calls_list = list(tool_call_buffer.values())
+            
+            assistant_tool_call_msg = {
+                'role': 'assistant',
+                'tool_calls': [],
+                'content': full_content or None,
+            }
+            self.chat_completion.append(assistant_tool_call_msg)
+            tc_objects = [
+                    SimpleNamespace(
+                        id=item['id'],
+                        function=SimpleNamespace(name=item['function']['name'], arguments=item['function']['arguments'])
+                    )
+                    for item in tool_calls_list
+                ]
+                
+            yield from self.tool_calling(tc_objects)       
 
-        
+        elif full_content:
+            self.chat_completion.append({
+                'role':'assistant',
+                'content':full_content
+            })
+            
+        yield {
+            'role': 'completion',
+            'data': self.chat_completion
+        }
+            
     def tool_calling(self, tool_calls:list):
+
         self.tool_calls = tool_calls
         
         for tool_call in self.tool_calls:
@@ -60,65 +110,75 @@ class CASE:
                         function_arguments = parsed if isinstance(parsed, dict) else {}
                     except:
                         function_arguments = {}
+
+                yield {
+                    'role': 'tool_call_details',
+                    'data':{
+                        'function_name': function_name,
+                        'function_arguments': function_arguments
+                    }
+                }
                 
                 try:
                     function_response = function_to_call(**function_arguments)
                 except Exception as e:
-                    function_response = f"Error: An error occured {e}"
-                
+                    function_response = f"Unable to call the function because of {e}" 
+
                 if isinstance(function_response, (dict, list)):
                     function_response = json.dumps(function_response, indent=2, ensure_ascii=False)
                 else:
                     function_response = str(function_response)
-                    
-                yield {
-                    "tool_call_response": function_response
+
+                yield{
+                    'role':'tool_call_response',
+                    'data': function_response
                 }
-                self.chat_completion.append(
-                    {
-                        "role":"tool",
-                        "tool_call_id": tool_call.id,
-                        "name":function_name,
-                        "content":function_response
-                    }
-                )
                 
-            else:
                 self.chat_completion.append(
                     {
-                        "role":"tool",
-                        "tool_call_id": tool_call.id,
-                        "name":function_name,
-                        "content": json.dumps({"Error": f"The function '{function_name}' not found."})                    
+                        'role':'tool',
+                        'tool_call_id': tool_call.id,
+                        'name': function_name,
+                        'content':function_response
                     }
                 )
+                yield {
+                    'role':'completion',
+                    'data' : self.chat_completion
+                }
+            
+            else:
+                self.chat_completion.append({
+                    'role':"tool",
+                    'tool_call_id': tool_call.id,
+                    'name': function_name,
+                    'content':json.dumps({"Error": f"The function '{function_name}' not found."})
+                })
+
+                yield {
+                    'role':'completion',
+                    'data' : self.chat_completion
+                }
                 
         try:
-            response = self.provider_.chat(chat_completion = self.chat_completion)
+            yield from self.gen_ai_response(chat_completion=self.chat_completion)
         except Exception as e:
-            raise Exception(f"An Error occured: {e}")
-        
-        if response.choices[0].message.tool_calls:
-            yield from self.tool_calling(response.choices[0].message.tool_calls)
-            
-        else:
-            yield {
-                "content": response.choices[0].message.content
-            }
-                 
-    def chat_summarize(self, chat_completion:list, custom_summarization_prompt:str = None) -> list:
-        
-        if custom_summarization_prompt:
-            summarization_prompt = custom_summarization_prompt
-        else:
-            summarization_prompt = {
-                            "role": "user",
-                            "content": "Summarize our previous conversation in few concise sentences. Focus only on the factual information discussed. Do not add roleplay elements, character references, or fictional context."
-                        }
-        
-        chat_completion.append(summarization_prompt)
+            raise Exception(f"Error:An exception occured while tool calling{e}")
 
-        response = self.provider_.chat(chat_completion=chat_completion)
+
+    def chat_summarization(self, chat_completion:list ) -> list:
+        
+        chat_completion.append({
+            'role':'user',
+            'content':"Summarize the conversation concisely while preserving:\
+                        user's goals and requirements, key facts and decisions made,\
+                        technical details and specifications, unresolved questions or next steps,\
+                        user preferences and feedback on responses. Use direct statements,\
+                        not meta-descriptions. Keep exact numbers, names, and technical terms.\
+                        Prioritize actionable context that enables seamless conversation continuation."
+        })
+        
+        response = self.main_agent.non_streaming_chat(chat_completion)
 
         chat_completion = [{
             "role": "system",
@@ -126,7 +186,8 @@ class CASE:
                         Provide accurate, clear, and concise responses.\
                         Adapt your tone and level of detail to the user’s needs.\
                         Do not guess or fabricate information; say when you are unsure.\
-                        Ask clarifying questions only when necessary."
+                        Ask clarifying questions only when necessary.\
+                        And do not add what you are thinking into the summarization."
         }
         ]
         
@@ -135,6 +196,6 @@ class CASE:
             "content": response.choices[0].message.content
         }
         )
-        return chat_completion
         
-
+        return chat_completion
+    
