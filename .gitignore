@@ -1,6 +1,8 @@
 ## Venv
 .case/   
 
+.vscode/
+
 ## Temp test files
 test.py
 core/test.py
