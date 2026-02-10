@@ -3,7 +3,7 @@ import subprocess
 import questionary
 from rich.console import Console 
 from rich.panel import Panel
-from questionary import Style
+from questionary import Style, Choice, select
 
 console = Console()
 
@@ -80,14 +80,29 @@ def startup_details(provider_name , model_name):
         border_style="cyan",
         expand=False
     ))
+    console.print()
 
 
 
-    # console.print(Panel(
-    #     f"● Current Provider: [aquamarine1]{provider_name}[/aquamarine1]\
-    #     \n● Current Model: [aquamarine1]{model_name}[/aquamarine1]\
-    #     \n● Use [violet]/model[/violet] to switch provider and model.\
-    #     \n● Use [violet]/help[/violet] for commands.",
-    #     expand=False                ))
+def change_theme():
+    themes = (
+        Choice("Github Dark", value="github-dark"),
+        Choice("Monokai", value="monokai"),
+        Choice("Dracula", value="dracula"),
+        Choice("Nord", value="nord"),
+        Choice("One Dark", value="one-dark"),
+        Choice("Solarized Dark", value="solarized-dark"),
+        Choice("Solarized Light", value="solarized-light")
+    )
+    theme = questionary.select(
+        "Select a theme ",
+        qmark='●',
+        choices=themes,
+        style=modern_purple,
+        use_jk_keys=True,
+        use_shortcuts=True
+    ).ask()
+    
+    return theme
 
     
