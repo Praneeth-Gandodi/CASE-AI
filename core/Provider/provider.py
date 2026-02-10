@@ -1,7 +1,7 @@
 from openai import OpenAI
 from openai import APIConnectionError, AuthenticationError, RateLimitError, APIStatusError
 from core.exception import CASEError, ProviderNotFound 
-from pathlib import Path
+from core.config import provider_json_path
 import json
 
 class Providers:
@@ -15,9 +15,7 @@ class Providers:
         self.client = OpenAI(base_url=self.endpoint, api_key=self.api_key)
 
     def get_endpoint(self):
-        base_dir = Path(__file__).resolve().parent
-        file_path = base_dir / "providers.json"
-        with open(file_path, 'r') as file:
+        with open(provider_json_path, 'r') as file:
             providers_json = json.load(file)
             
             endpoint = None
