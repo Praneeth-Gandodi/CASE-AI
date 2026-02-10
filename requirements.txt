@@ -2,3 +2,4 @@ openai
 rich
 questionary
 python-dotenv
+git+https://github.com/Praneeth-Gandodi/markrender
