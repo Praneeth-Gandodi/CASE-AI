@@ -1,8 +1,9 @@
 import json 
 import questionary
-from questionary import Style, Choice
 from pathlib import Path
+from questionary import Choice
 from dotenv import load_dotenv, set_key
+from core.config import provider_json_path, env_file_path
 from .cli_styling import (info_printing,
                           non_empty_input,
                           warning_printing,
@@ -10,20 +11,18 @@ from .cli_styling import (info_printing,
                           console)
 
 
+
 def input_provider_details():
-    
-    base_dir = Path(__file__).resolve().parent.parent
-    env_file = base_dir  / ".env"
     
     info_printing("\n🛈 Make sure the API provider or model supports the OpenAI JSON format.")
     print()
-    info_printing("Please provide the details of the provider ↓")
+    info_printing("Please provide the details of the provider ")
     
     provider_name = non_empty_input("Enter provider name: ")
     endpoints = non_empty_input("Enter the endpoint of the provider: ")
     api_key = input("Enter api key of the provider(If no api key leave blank): ").strip()
     print()
-    info_printing("Are these details correct ↓")
+    info_printing("Are these details correct ")
     console.print(f"[dark_slate_gray1]Provider name:[/dark_slate_gray1][grey100] {provider_name}[/grey100]\n[dark_slate_gray1]endpoint:[/dark_slate_gray1] [grey100]{endpoints}[/grey100]\n[dark_slate_gray1]Api key:[/dark_slate_gray1] {api_key}")
     choice_ = questionary.confirm(
         "Confirm?",
@@ -50,12 +49,12 @@ def input_provider_details():
     
     if api_key:
         load_dotenv() 
-        set_key(dotenv_path=env_file, key_to_set=api_key_name, value_to_set=api_key )
+        set_key(dotenv_path=env_file_path, key_to_set=api_key_name, value_to_set=api_key )
         
     return custom_provider_details
 
 def add_models(provider_list, provider_choice, providers_by_id):
-    info_printing("🛈 Please provide the model details ↓")
+    info_printing("🛈 Please provide the model details ")
     
     model_name = non_empty_input("Enter the name of the model: ")
     model_id = non_empty_input(f"Enter the id for the model: ")
@@ -75,14 +74,12 @@ def add_models(provider_list, provider_choice, providers_by_id):
     
 
 def get_provider_list(provider_list=None, mode:str = "r"):
-    base_dir = Path(__file__).resolve().parent.parent
-    provider_file = base_dir /"core" / "Provider" / "providers.json"
     if mode == "r": 
-        with open(provider_file, 'r') as file:
+        with open(provider_json_path, 'r') as file:
             provider_list = json.load(file)
         return provider_list    
     else:
-        with open(provider_file, 'w') as file:
+        with open(provider_json_path, 'w') as file:
             json.dump(provider_list, file , indent=4)
     
 def get_provider():
@@ -96,7 +93,7 @@ def get_provider():
     provider_ids.append(Choice("Custom Provider", value="custom"))
     
     provider_choice = questionary.select(
-        "Select a provider ↓",
+        "Select a provider ",
         qmark='●',
         choices=provider_ids,
         style=modern_purple,
@@ -123,7 +120,7 @@ def get_model(provider_choice):
     model_tuple.append(Choice("Add a new model", value="add_model"))
     model_tuple.append(Choice("Back", value="back"))
     model_choice = questionary.select(
-        "Select or Add a new model ↓",
+        "Select or Add a new model ",
         qmark='●',
         choices=model_tuple,
         style=modern_purple,
