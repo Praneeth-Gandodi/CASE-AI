@@ -12,6 +12,21 @@ Right now, the project is just getting started, so there's a lot more to come!
 - Remembers conversation history and can summarize chats
 - Can switch between different AI models and providers
 
+## How to use
+
+``` bash
+# Clone this repo
+git clone https://github.com/Praneeth-Gandodi/CASE-AI
+cd CASE-AI
+
+# Install the requirements and launch
+pip install -r requirements.txt
+python -m cli.cli
+
+```
+
+- **Note:** After launching, ensure a provider and model in settings.
+
 ## Coming Soon
 
 - **Text-to-Speech**: So the AI can actually talk back to you with a voice
