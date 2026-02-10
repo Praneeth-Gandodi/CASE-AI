@@ -1,12 +1,11 @@
-import os 
-import tomlkit 
 import sys
-import pathlib
+from rich.spinner import Spinner
 from markrender import MarkdownRenderer
 from openai import APIStatusError
 from core.engine import Case
 from core.settings import Settings
 from core.exception import ApiKeyNotFound
+from core.config import verify_config, create_files
 from .cli_settings import model_settings
 from .cli_styling import (
     info_printing,
@@ -16,14 +15,16 @@ from .cli_styling import (
     clear_the_terminal,
     prompt_api_key,
     startup_details,
+    change_theme,
     console, 
 )
+
 
 class Terminal_interface:
     def __init__(self):
         self.settings = Settings()
-        self.renderer = MarkdownRenderer(theme='monokai')
-        self.chat_completeion = [
+        self.renderer = MarkdownRenderer()
+        self.chat_completion = [
             {
                 "role": "system",
                 "content": ("""
@@ -40,9 +41,14 @@ class Terminal_interface:
         ]
         
     def startup_configuration(self):
+
+        verify_config() ## Check whether the json and toml exists or not
+
         provider_json = self.settings.get_provider_json()
         settings_toml = self.settings.get_settings_toml()
         
+        if settings_toml['general']['theme']:
+            self.renderer = MarkdownRenderer(theme = settings_toml['general']['theme'])       
         
         if not settings_toml['provider']['provider_id'] or not settings_toml['provider']['model_id']:
             provider_id , model_id = model_settings()
@@ -51,6 +57,7 @@ class Terminal_interface:
             
             self.settings.get_settings_toml(updated_settings=settings_toml, mode= "w")
         else:
+            provider_json = self.settings.get_provider_json()
             provider_id = settings_toml['provider']['provider_id']
             model_id = settings_toml['provider']['model_id']
             
@@ -112,7 +119,16 @@ class Terminal_interface:
         elif prompt.lower() == "/clear":
             clear_the_terminal()
         elif prompt.lower() == "/summarize":
-            self.chat_completion = self.agent.chat_summarization(chat_completion=self.chat_completeion)
+            self.chat_completion = self.agent.chat_summarization(chat_completion=self.chat_completion)
+        elif prompt.lower() == "/theme":
+            theme = change_theme()
+            settings_toml = self.settings.get_settings_toml()
+            settings_toml['general']['theme'] = theme
+            self.settings.get_settings_toml(settings_toml, "w")
+            self.renderer = MarkdownRenderer(theme=theme)
+        # elif prompt.lower() == "/refresh":
+        #     create_files("settings")
+        #     create_files("provider")
         else:
             return prompt
 
@@ -139,36 +155,31 @@ class Terminal_interface:
 
         
         while True:
-            print()
             prompt = self.ask_user()   
             print()
-            self.chat_completeion.append({
+            self.chat_completion.append({
                 "role":'user',
                 'content':prompt
             })
             
             try:
-                reply_object = self.agent.gen_ai_response(chat_completion=self.chat_completeion)
+                reply_object = self.agent.gen_ai_response(chat_completion=self.chat_completion)
 
                 final_text = ""
-                console.print("[grey100]✺ [/grey100]", end = "")
+                console.print("[bold purple]✦ [/bold purple]", end = "")
                 for chunk in reply_object:
                     if chunk['role'] == 'content':
                         self.renderer.render(chunk["data"])
-                        final_text += chunk['data']
+                        final_text += chunk['data']                                                
+                    elif chunk['role'] == 'completion':
+                        self.chat_completion = chunk['data']
+                        
                 self.renderer.finalize()
             except APIStatusError as e:
-                console.print("Api Key is not Valid..........")
+                console.print("API Key is not valid or no API key ")
             except Exception as e:
                 continue
-            
-            except KeyboardInterrupt:
-                console.print("Keyboard Interruption detected exitting.")
 
-            self.chat_completeion.append({
-                'role':'assistant',
-                'content':final_text
-            })
     
 tui = Terminal_interface()    
 tui.cli()
