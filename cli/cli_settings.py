@@ -156,6 +156,15 @@ def model_settings():
     if model_choice is None:
         return model_settings()
     
-    return provider_choice, model_choice
+    provider_list = get_provider_list()        
+    providers_by_id = {p["provider_id"]: p for p in provider_list}
+    model_name = None
+      
+    for model in providers_by_id[provider_choice]["models"]:
+        if model["model_id"] == model_choice:
+            model_name = model["model_name"]
+            break
+        
+    return provider_choice, model_choice, model_name
         
 

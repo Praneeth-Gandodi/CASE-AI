@@ -51,7 +51,7 @@ class Terminal_interface:
             self.renderer = MarkdownRenderer(theme = settings_toml['general']['theme'])       
         
         if not settings_toml['provider']['provider_id'] or not settings_toml['provider']['model_id']:
-            provider_id , model_id = model_settings()
+            provider_id , model_id , model_name = model_settings()
             settings_toml['provider']['provider_id'] = provider_id
             settings_toml['provider']['model_id'] = model_id
             
@@ -68,8 +68,6 @@ class Terminal_interface:
                     if model['model_id'] == model_id:
                         model_name = model['model_name']    
                 break
-        
-        
         api_key = self.get_api(provider_id=provider_id)  
               
         return provider_name, provider_id, model_id, api_key, model_name                   
@@ -94,7 +92,7 @@ class Terminal_interface:
             
     def change_model_or_provider(self):
         setttings_toml = self.settings.get_settings_toml()    
-        provider_id , model_id = model_settings()
+        provider_id , model_id, model_name = model_settings()
         
         setttings_toml['provider']['provider_id'] = provider_id
         setttings_toml['provider']['model_id'] = model_id
@@ -148,9 +146,18 @@ class Terminal_interface:
         case_ascii_art()
         startup_details(provider_name=provider_name, model_name=model_name)
 
-        tools = None
+        # tools_json_path = Path(__file__).resolve().parent.parent / "core" / "tools" / "tools.json"
+        
+        # with open(tools_json_path, 'r') as file:
+        #     tools = json.load(file)
 
-        self.create_update_provider(provider_id=provider_id, model_id=model_id, api_key=api_key, tools=tools)
+        # available_functions = {
+        #     "get_weather": get_weather
+        # }
+        
+        tools = None
+        available_functions = None
+        self.create_update_provider(provider_id=provider_id, model_id=model_id, api_key=api_key, tools=tools, available_functions=available_functions)
         
 
         
@@ -161,6 +168,7 @@ class Terminal_interface:
                 "role":'user',
                 'content':prompt
             })
+            
             
             try:
                 reply_object = self.agent.gen_ai_response(chat_completion=self.chat_completion)
